@@ -36,9 +36,25 @@ func deleteUnusedImports(s *Snapshot, p *Package, text []byte) []byte {
 		}
 	})
 
+	vendorMatch := func(pkg string, p *Package) *Package {
+		for k, v := range p.ImportMap {
+			if k != pkg {
+				continue
+			}
+			p1 := s.pkgGraph.byPath(v)
+			if p1 != nil {
+				return p1
+			}
+		}
+		return nil
+	}
+
 	match := func(name, pkg string) bool {
 		if name == "" {
 			p1 := s.pkgGraph.byPath(pkg)
+			if p1 == nil {
+				p1 = vendorMatch(pkg, p)
+			}
 			if p1 == nil {
 				panic("NO IMPORT: " + pkg)
 			}
